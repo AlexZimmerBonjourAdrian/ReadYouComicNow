@@ -1,4 +1,10 @@
 import { LoggerService } from './LoggerService';
+import type { ComicViewState } from '@/types/Comic';
+
+export interface StoredProgress {
+  title: string;
+  state: ComicViewState;
+}
 
 // Persistencia local del cómic (privacidad: IndexedDB, sin subidas).
 export class StorageService {
