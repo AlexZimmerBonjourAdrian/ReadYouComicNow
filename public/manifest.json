@@ -1,0 +1,42 @@
+{
+    "name": "W.A.T.A: Where are the Alices? | ZimmZimm Games",
+    "short_name": "W.A.T.A",
+    "description": "Discover W.A.T.A: Where are the Alices?, a psychological horror visual novel inspired by Alice in Wonderland. Unique indie game with dark fantasy, furry, and political thriller elements.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#000000",
+    "theme_color": "#dc2626",
+    "orientation": "portrait-primary",
+    "scope": "/",
+    "lang": "en",
+    "categories": ["games", "entertainment"],
+    "icons": [{
+            "src": "/Icon/ajuste_avatar_Documents-3.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/Icon/ajuste_avatar_Documents-3.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "screenshots": [{
+            "src": "/images/Wata/WhereAreTheAlices.JPG",
+            "sizes": "1280x720",
+            "type": "image/jpeg",
+            "form_factor": "wide",
+            "label": "W.A.T.A: Where are the Alices?"
+        },
+        {
+            "src": "/images/Wata/Door.PNG",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "The door to mystery"
+        }
+    ],
+    "shortcuts": []
+}

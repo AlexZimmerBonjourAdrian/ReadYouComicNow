@@ -1,0 +1,41 @@
+User-agent: *
+Allow: /
+
+# Bloquear recursos que no necesitan indexación
+Disallow: /api/
+Disallow: /_next/
+Disallow: /static/
+
+# Permitir acceso a imágenes y recursos multimedia
+Allow: /images/
+Allow: /Icon/
+Allow: /Font/
+
+# Sitemap
+Sitemap: https://iridescent-sfogliatella-71f40c.netlify.app/sitemap.xml
+
+# Crawl-delay para ser respetuoso con el servidor
+Crawl-delay: 1
+
+# Reglas específicas para Googlebot
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0.5
+
+# Reglas específicas para Bingbot
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 0.5
+
+# Reglas para bots de redes sociales
+User-agent: Twitterbot
+Allow: /
+Allow: /images/
+
+User-agent: facebookexternalhit
+Allow: /
+Allow: /images/
+
+User-agent: LinkedInBot
+Allow: /
+Allow: /images/ 

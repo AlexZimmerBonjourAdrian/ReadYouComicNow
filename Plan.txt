@@ -1,0 +1,74 @@
+PLAN DE IMPLEMENTACIÓN - JustReadPDF
+
+ARQUITECTURA: Componentes profesionales + Procesamiento local
+
+OBJETIVO:
+Convertir PDF en HTML con formato (negritas, cursivas, estructura) para traducción manual.
+Procesamiento 100% en el navegador sin backend.
+
+FASE 1: Configuración básica ✓ COMPLETADO
+- Configurar Next.js 16.1.6 con TypeScript
+- Configurar TailwindCSS v4
+- Estructura inicial de componentes
+
+FASE 2: Visualizador profesional ✓ COMPLETADO
+- Instalar @shahajimbhosle/local-doc-viewer
+- Integrar DocumentViewer con modo oscuro
+- Configurar controles: zoom, búsqueda, impresión
+- Soporte multi-formato (PDF, HTML, DOCX, TXT)
+
+FASE 3: Extracción de texto con formato ✓ COMPLETADO
+- Instalar extract-pdf
+- Implementar conversión PDF → HTML estructurado
+- Mantener negritas, cursivas, headings H1-H6
+- Detección automática de listas y párrafos
+- Procesamiento local (sin servidor)
+
+FASE 4: Interfaz de usuario ✓ COMPLETADO
+- Input file para carga de PDF
+- Estados de carga y error
+- Visualización del HTML resultante
+- UI con modo oscuro integrado
+
+FASE 5: Refactor salud del proyecto (EN CURSO - TDD)
+- [ ] Nivel 1 Crítico: npm audit fix (xmldom/@file-viewer/doc), fix OcrService.ts:60 concurrency (2 workers max 2 promesas), fix EpubViewerService.ts:83 await container + parseSpine path base, fix StorageService.ts:112 clearDocuments Promise, sanitizar fileName ReadingFormatterService.ts:74/TextFormatterService.ts:104
+- [ ] Nivel 2 Deuda: DRY BaseFormatter (TextFormatterService:50 == ReadingFormatterService:211), unificar PdfToImageConverterService.ts:84/183, FileProcessorFactory.ts:10 lazy/DI, PdfProcessorStrategy.ts:21 processStored, tsconfig.json:11 strict:true, SearchService.ts:41 escapar query original
+- [ ] Nivel 3 Producción: tests 0->80% (vitest+jsdom+fakedb), bundle split tesseract/pdfjs, CI lint
+- Tests creados (ignorados por git .gitignore:13): SearchService.test.ts, TextFormatterService.test.ts, ReadingFormatterService.test.ts, StorageService.test.ts, FileProcessorFactory.test.ts, EpubViewerService.test.ts, ViewerFactory.test.ts, PdfToImageConverterService.test.ts
+
+FASE 6: Traducción HTML preservando formato (APLICADO - MD legado desconectado)
+- Objetivo: Traducir sin MD, preservando tablas/negritas/estructura, usando mismo NMT que Google Website Translator (no IA)
+- CAMBIO APLICADO: Todas las strategies ahora retornan viewer:'html' HTML fiel
+  - TxtViewerService.ts: readTxtFileAsHtml, RtfViewerService.ts: readRtfFileAsHtml, DocxViewerService.ts: readDocxFileAsHtml, DocLegacyViewerService.ts: readDocFileAsHtml, EpubViewerService.ts: readEpubFileAsHtml (con opfDir fix), PdfProcessorStrategy.ts: extractHtml+extractPlainText -> htmlFile text/html
+  - FileProcessorStrategy.ts:1 ProcessedFile con originalFileName, estrategias Txt/Rtf/Docx/Doc/Epub migradas a html
+  - page.tsx:76/139 HTML primario, PDF stored genera html, DocumentViewer md legado no usado (HtmlViewer.tsx:1 primario)
+  - MD queda legacy desconectado en cada Service (métodos readXFile originales conservados pero no llamados)
+- Próximo: inyección `//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit` en iframe HtmlViewer.tsx:72 (sandbox allow-scripts) o Cloud Translation v2 format=html
+- Beneficio: fidelidad 1:1 vs md, costo 0$ widget cliente, mismo engine Chrome
+- Estado: MIGRADO A HTML, traducción widget pendiente
+
+FASE 5 (original - movida a Fase 7): Próximas mejoras (PENDIENTE)
+- [ ] Exportar HTML para traducción externa (reemplazado por Fase 6)
+- [ ] Procesamiento por páginas/bloques
+- [ ] Caché de conversiones
+- [ ] Soporte para PDFs escaneados (OCR) ✓ implementado OcrService.ts:4
+
+ENFOQUE ACTUAL:
+Uso de componentes profesionales probados en lugar de desarrollo desde cero.
+Procesamiento 100% client-side para privacidad y velocidad.
+
+DEPENDENCIAS ACTUALES:
+- Next.js 16.1.6 ✓
+- TailwindCSS v4 ✓
+- @shahajimbhosle/local-doc-viewer ✓ (visualizador profesional)
+- extract-pdf ✓ (extracción con formato)
+- react-pdf v10.4.1 ✓ (dependencia interna)
+- react-icons ✓
+- framer-motion ✓
+- geist ✓
+
+FASE 8: PURGA A LECTOR DE COMICS (README manda) - COMPLETADO
+- Purgado: OcrService, PdfTextExtractor, TextFormatterService, ReadingFormatterService, ViewerFormatterService, SearchService, DocumentStructureService, DocumentValidationService, Txt/Rtf/Docx/DocLegacy/EpubViewerService(texto), FileProcessorFactory+Strategy+6 strategies, ViewerInteractionService, PdfToImageConverterService, HtmlViewer+ViewerFactory+ViewerToolbar+SearchBar+TextPreview+Faithful*(4)+EmptyDocumentModal+AdSense+Header/Footer documento, ViewerData types.
+- Nuevo: types/Comic.ts, services/ComicReaderService.ts (CBZ/ZIP+PDF render+EPUB imagenes+imagenes sueltas, orden natural, blob URLs), services/StorageService.ts reescrito (IndexedDB ReadYouComicNow_DB, clearConAwait), components/ComicViewer.tsx (single/double/scroll + LTR/RTL manga + teclado), page/layout/globals reescritos a comic.
+- Deps: removidas doc/texto (pdf2md, tesseract, docx-preview, file-viewer, doc-viewers, html2pdf, file-saver, framer-motion, react-icons, heroicons, epubjs, geist); quedan jszip+react-pdf+next/react. package rename a readyoucomicnow. Build OK + tsc limpio.
+
