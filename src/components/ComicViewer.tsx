@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import OptionsMap from './OptionsMap';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import type { ComicBook, ComicDirection, ComicFit, ComicLayout } from '@/types/Comic';
 
 interface ComicViewerProps {
@@ -16,6 +17,7 @@ export default function ComicViewer({ book, onLoadOther, onClear }: ComicViewerP
   const [fit, setFit] = useState<ComicFit>('page');
   const [page, setPage] = useState(0);
   const [showMap, setShowMap] = useState(false);
+  const isMobile = useIsMobile();
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const drag = useRef<{ id: number; sx: number; sy: number; ox: number; oy: number } | null>(null);
@@ -129,11 +131,11 @@ export default function ComicViewer({ book, onLoadOther, onClear }: ComicViewerP
           : 'absolute bottom-3 right-3 z-10 flex items-center gap-1 rounded-[8px] border border-[#2A2E33] bg-black/70 px-1.5 py-1'
       }
     >
-      <button onClick={zoomOut} title="Reducir zoom" className="px-2 py-1 text-[14px] leading-none text-white hover:bg-[#2A2E33] rounded">−</button>
-      <button onClick={resetZoom} title="Restablecer zoom (doble clic también)" className="px-2 py-1 text-[12px] text-[#9CA3AF] font-mono hover:text-white">
+      <button onClick={zoomOut} title="Reducir zoom" className="px-2.5 py-2 sm:px-2 sm:py-1 text-[14px] leading-none text-white hover:bg-[#2A2E33] rounded">−</button>
+      <button onClick={resetZoom} title="Restablecer zoom (doble clic también)" className="px-2.5 py-2 sm:px-2 sm:py-1 text-[12px] text-[#9CA3AF] font-mono hover:text-white">
         {Math.round(zoom * 100)}%
       </button>
-      <button onClick={zoomIn} title="Ampliar zoom" className="px-2 py-1 text-[14px] leading-none text-white hover:bg-[#2A2E33] rounded">+</button>
+      <button onClick={zoomIn} title="Ampliar zoom" className="px-2.5 py-2 sm:px-2 sm:py-1 text-[14px] leading-none text-white hover:bg-[#2A2E33] rounded">+</button>
     </div>
   );
 
@@ -175,8 +177,8 @@ export default function ComicViewer({ book, onLoadOther, onClear }: ComicViewerP
 
   return (
     <div className="flex-1 min-h-0 bg-[#0f0f0f] flex flex-col overflow-hidden">
-      <div className="flex items-center gap-2 px-4 h-[48px] bg-[#1a1a1a] border-b border-[#2A2E33] shrink-0 flex-wrap">
-        <span className="text-[11px] font-mono text-[#9CA3AF] truncate min-w-0 flex-1" title={book.title}>
+      <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 min-h-[48px] bg-[#1a1a1a] border-b border-[#2A2E33] shrink-0 flex-wrap">
+        <span className="text-[11px] font-mono text-[#9CA3AF] truncate min-w-0 basis-full sm:basis-auto sm:flex-1" title={book.title}>
           {book.title} · {total} pág.
         </span>
         <div className="flex items-center rounded-[8px] overflow-hidden border border-[#2A2E33] shrink-0">
@@ -260,6 +262,37 @@ export default function ComicViewer({ book, onLoadOther, onClear }: ComicViewerP
           ))}
           {isZoom && zoomControls(true)}
         </div>
+      ) : isMobile && layout === 'double' ? (
+        <div className="flex-1 min-h-0 flex flex-col">
+          <div className="flex-1 min-h-0 overflow-auto flex flex-col items-center gap-2 p-3">
+            {ordered.map((idx) => (
+              <img
+                key={idx}
+                src={book.pages[idx]}
+                alt={`Página ${idx + 1}`}
+                loading="lazy"
+                draggable={false}
+                className="w-full h-auto rounded-[6px] shadow-[0_8px_30px_rgba(0,0,0,0.5)]"
+              />
+            ))}
+          </div>
+          <div className="flex items-center justify-center gap-3 px-3 py-2 shrink-0" dir={direction === 'rtl' ? 'rtl' : 'ltr'}>
+            <button onClick={() => setPage((p) => clamp(p - step))} disabled={page === 0} className="flex-1 px-4 py-2.5 bg-[#25282B] border border-[#2A2E33] text-white rounded-[8px] text-[13px] disabled:opacity-40">
+              {direction === 'rtl' ? 'Anterior →' : '← Anterior'}
+            </button>
+            <span className="text-[12px] text-[#9CA3AF] font-mono shrink-0" dir="ltr">
+              {(() => {
+                const s = spread();
+                const lo = Math.min(...s) + 1;
+                const hi = Math.max(...s) + 1;
+                return lo === hi ? `${lo} / ${total}` : `${lo}–${hi} / ${total}`;
+              })()}
+            </span>
+            <button onClick={() => setPage((p) => clamp(p + step))} disabled={page >= total - 1} className="flex-1 px-4 py-2.5 bg-[#25282B] border border-[#2A2E33] text-white rounded-[8px] text-[13px] disabled:opacity-40">
+              {direction === 'rtl' ? '← Siguiente' : 'Siguiente →'}
+            </button>
+          </div>
+        </div>
       ) : (
         <div className="flex-1 min-h-0 flex flex-col">
           <div ref={boxRef} className={`relative flex-1 min-h-0 flex p-4 ${fit === 'window' || isZoomPan ? 'overflow-hidden items-center justify-center' : `overflow-auto ${fit === 'width' ? 'items-start justify-center' : 'items-center justify-center'}`} ${layout === 'double' && (fit === 'window' || isZoomPan) ? 'gap-1' : 'gap-3'}`}>
@@ -283,8 +316,8 @@ export default function ComicViewer({ book, onLoadOther, onClear }: ComicViewerP
             )}
             {isZoom && zoomControls(false)}
           </div>
-          <div className="flex items-center justify-center gap-3 py-3 shrink-0" dir={direction === 'rtl' ? 'rtl' : 'ltr'}>
-            <button onClick={() => setPage((p) => clamp(p - step))} disabled={page === 0} className="px-4 py-2 bg-[#25282B] border border-[#2A2E33] text-white rounded-[8px] text-[13px] disabled:opacity-40">
+          <div className="flex items-center justify-center gap-3 px-3 py-2 shrink-0" dir={direction === 'rtl' ? 'rtl' : 'ltr'}>
+            <button onClick={() => setPage((p) => clamp(p - step))} disabled={page === 0} className="flex-1 sm:flex-none px-4 py-2.5 sm:py-2 bg-[#25282B] border border-[#2A2E33] text-white rounded-[8px] text-[13px] disabled:opacity-40">
               {direction === 'rtl' ? 'Anterior →' : '← Anterior'}
             </button>
             <span className="text-[12px] text-[#9CA3AF] font-mono" dir="ltr">
@@ -295,7 +328,7 @@ export default function ComicViewer({ book, onLoadOther, onClear }: ComicViewerP
                 return lo === hi ? `${lo} / ${total}` : `${lo}–${hi} / ${total}`;
               })()}
             </span>
-            <button onClick={() => setPage((p) => clamp(p + step))} disabled={page >= total - 1} className="px-4 py-2 bg-[#25282B] border border-[#2A2E33] text-white rounded-[8px] text-[13px] disabled:opacity-40">
+            <button onClick={() => setPage((p) => clamp(p + step))} disabled={page >= total - 1} className="flex-1 sm:flex-none px-4 py-2.5 sm:py-2 bg-[#25282B] border border-[#2A2E33] text-white rounded-[8px] text-[13px] disabled:opacity-40">
               {direction === 'rtl' ? '← Siguiente' : 'Siguiente →'}
             </button>
           </div>

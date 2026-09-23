@@ -89,7 +89,7 @@ export default function Home() {
             <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
               <div className="lg:col-span-7">
                 <p className="text-[11px] tracking-[0.14em] uppercase text-[#C0392B] font-semibold mb-3">Lector local · Privado</p>
-                <h1 className="font-serif text-[42px] md:text-[52px] font-bold tracking-[-0.03em] leading-[0.95] text-white mb-4">
+                <h1 className="font-serif text-[34px] sm:text-[42px] md:text-[52px] font-bold tracking-[-0.03em] leading-[0.95] text-white mb-4">
                   Lee tus cómics<br />y manga<br /><span className="font-normal italic text-[#9CA3AF]">en el navegador.</span>
                 </h1>
                 <p className="text-[15px] leading-[1.7] text-[#9CA3AF] max-w-[48ch] mb-8">
