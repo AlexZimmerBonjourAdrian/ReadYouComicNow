@@ -125,7 +125,7 @@ Write-Host '  COMO PROBARLO (2 min):' -ForegroundColor Cyan
 Write-Host "  1. En la pagina, carga test-data\demo.cbz" -ForegroundColor White
 Write-Host '  2. Cambia Simple / Doble / Scroll y activa modo Manga' -ForegroundColor White
 Write-Host '  3. Recarga el navegador: el cómic persiste (IndexedDB local)' -ForegroundColor White
-Write-Host '  4. Prueba Limpiar y cargar tu propio .cbz/.pdf/.epub' -ForegroundColor White
+Write-Host '  4. Prueba Limpiar y cargar tu propio .cbz/.pdf' -ForegroundColor White
 Write-Host ''
 
 # 5. Navegador cuando el servidor responda

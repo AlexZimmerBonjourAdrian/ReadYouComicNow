@@ -224,7 +224,7 @@ export default function ComicViewer({ book, onLoadOther, onClear }: ComicViewerP
           <input
             type="file"
             multiple
-            accept=".cbz,.zip,.pdf,.epub,.jpg,.jpeg,.png,.webp,.gif,.avif,.bmp"
+            accept=".cbz,.zip,.pdf,.jpg,.jpeg,.png,.webp,.gif,.avif,.bmp"
             onChange={(e) => {
               const files = Array.from(e.target.files ?? []);
               if (files.length) onLoadOther(files);

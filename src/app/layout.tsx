@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "ReadYouComicNow - Comic & Manga Reader 100% Local",
-  description: "Lightweight browser-based comic and manga reader. Fast local reading, custom layouts, total privacy. Open CBZ, PDF, EPUB and images without uploads.",
+  description: "Lightweight browser-based comic and manga reader. Fast local reading, custom layouts, total privacy. Open CBZ, PDF and images without uploads.",
   keywords: ["comic reader", "manga reader", "cbz reader", "read comics online", "local comic reader", "manga rtl"],
   authors: [{ name: "ReadYouComicNow" }],
   creator: "ReadYouComicNow",
@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     applicationCategory: 'MultimediaApplication',
     operatingSystem: 'Web',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-    featureList: ['CBZ reading', 'PDF comic reading', 'EPUB image reading', 'Single/double/scroll layouts', 'Manga right-to-left mode', '100% local processing'],
+    featureList: ['CBZ reading', 'PDF comic reading', 'Single/double/scroll layouts', 'Manga right-to-left mode', '100% local processing'],
   };
 
   return (

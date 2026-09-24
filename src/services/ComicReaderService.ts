@@ -12,7 +12,6 @@ export class ComicReaderService {
       name.endsWith('.cbz') ||
       name.endsWith('.zip') ||
       name.endsWith('.pdf') ||
-      name.endsWith('.epub') ||
       IMAGE_EXT.test(name)
     );
   }
@@ -37,8 +36,7 @@ export class ComicReaderService {
     const name = file.name.toLowerCase();
     if (name.endsWith('.cbz') || name.endsWith('.zip')) return this.loadCbz(file);
     if (name.endsWith('.pdf')) return this.loadPdf(file, onProgress);
-    if (name.endsWith('.epub')) return this.loadEpub(file);
-    throw new Error(`Formato no soportado: ${file.name}. Usa CBZ, PDF, EPUB o imágenes.`);
+    throw new Error(`Formato no soportado: ${file.name}. Usa CBZ, PDF o imágenes.`);
   }
 
   private static async loadCbz(file: File): Promise<ComicBook> {
@@ -57,34 +55,6 @@ export class ComicReaderService {
     LoggerService.info('Comic', `CBZ ${file.name}: ${pages.length} páginas`);
     end();
     return { title: file.name.replace(/\.(cbz|zip)$/i, ''), pages, format: 'cbz' };
-  }
-
-  private static async loadEpub(file: File): Promise<ComicBook> {
-    // Novela de texto primero; si no, cómic de imágenes.
-    try {
-      const { EpubTextService } = await import('./EpubTextService');
-      const text = await EpubTextService.loadTextBook(file);
-      if (text) {
-        return { title: text.title, pages: [], format: 'epub-text', chapters: text.chapters, bookImages: text.images };
-      }
-    } catch (e) {
-      LoggerService.warn('Comic', `EPUB texto falló, modo imágenes: ${e instanceof Error ? e.message : e}`);
-    }
-    const end = LoggerService.start('Comic', `EPUB img ${file.name}`);
-    const zip = await JSZip.loadAsync(await file.arrayBuffer());
-    const names = Object.keys(zip.files).filter(
-      (n) => IMAGE_EXT.test(n) && !n.includes('META-INF') && !n.endsWith('/'),
-    );
-    if (names.length === 0) throw new Error(`"${file.name}" no contiene imágenes de cómic.`);
-    names.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-    const pages: string[] = [];
-    for (const n of names) {
-      const blob = await zip.file(n)!.async('blob');
-      pages.push(URL.createObjectURL(new Blob([blob], { type: this.mimeFor(n) })));
-    }
-    LoggerService.info('Comic', `EPUB ${file.name}: ${pages.length} páginas`);
-    end();
-    return { title: file.name.replace(/\.epub$/i, ''), pages, format: 'epub' };
   }
 
   private static async loadPdf(file: File, onProgress?: (p: number) => void): Promise<ComicBook> {
@@ -118,7 +88,6 @@ export class ComicReaderService {
 
   static revokeComic(book: ComicBook | null): void {
     book?.pages.forEach((u) => URL.revokeObjectURL(u));
-    book?.bookImages?.forEach((u) => URL.revokeObjectURL(u));
   }
 
   private static mimeFor(name: string): string {
