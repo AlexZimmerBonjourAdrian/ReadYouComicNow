@@ -3,7 +3,7 @@ import { LoggerService } from './LoggerService';
 import type { ComicBook } from '@/types/Comic';
 
 const IMAGE_EXT = /\.(jpe?g|png|webp|gif|avif|bmp)$/i;
-const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB
+const MAX_FILE_SIZE = 900 * 1024 * 1024; // 900MB
 
 export class ComicReaderService {
   static isSupported(file: File): boolean {
@@ -21,7 +21,7 @@ export class ComicReaderService {
     if (files.length === 0) throw new Error('Sin archivos.');
     for (const f of files) {
       if (f.size > MAX_FILE_SIZE) {
-        throw new Error(`"${f.name}" supera 200MB.`);
+        throw new Error(`"${f.name}" supera 900MB.`);
       }
     }
 
@@ -60,7 +60,17 @@ export class ComicReaderService {
   }
 
   private static async loadEpub(file: File): Promise<ComicBook> {
-    const end = LoggerService.start('Comic', `EPUB ${file.name}`);
+    // Novela de texto primero; si no, cómic de imágenes.
+    try {
+      const { EpubTextService } = await import('./EpubTextService');
+      const text = await EpubTextService.loadTextBook(file);
+      if (text) {
+        return { title: text.title, pages: [], format: 'epub-text', chapters: text.chapters, bookImages: text.images };
+      }
+    } catch (e) {
+      LoggerService.warn('Comic', `EPUB texto falló, modo imágenes: ${e instanceof Error ? e.message : e}`);
+    }
+    const end = LoggerService.start('Comic', `EPUB img ${file.name}`);
     const zip = await JSZip.loadAsync(await file.arrayBuffer());
     const names = Object.keys(zip.files).filter(
       (n) => IMAGE_EXT.test(n) && !n.includes('META-INF') && !n.endsWith('/'),
@@ -80,7 +90,8 @@ export class ComicReaderService {
   private static async loadPdf(file: File, onProgress?: (p: number) => void): Promise<ComicBook> {
     const end = LoggerService.start('Comic', `PDF ${file.name}`);
     const { pdfjs } = await import('react-pdf');
-    pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
+    // Worker local (public/pdf.worker.min.mjs vía postinstall): funciona sin internet.
+    pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
     const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
     const pages: string[] = [];
     for (let i = 1; i <= pdf.numPages; i++) {
@@ -107,6 +118,7 @@ export class ComicReaderService {
 
   static revokeComic(book: ComicBook | null): void {
     book?.pages.forEach((u) => URL.revokeObjectURL(u));
+    book?.bookImages?.forEach((u) => URL.revokeObjectURL(u));
   }
 
   private static mimeFor(name: string): string {

@@ -8,6 +8,7 @@ import { LoggerService } from '@/services/LoggerService';
 import type { ComicBook } from '@/types/Comic';
 
 const ComicViewer = dynamic(() => import('@/components/ComicViewer'), { ssr: false });
+const EpubBookViewer = dynamic(() => import('@/components/EpubBookViewer'), { ssr: false });
 
 const ACCEPT = '.cbz,.zip,.pdf,.epub,.jpg,.jpeg,.png,.webp,.gif,.avif,.bmp';
 
@@ -83,7 +84,16 @@ export default function Home() {
             )}
           </div>
         ) : book ? (
-          <ComicViewer book={book} onLoadOther={(f) => openFiles(f)} onClear={handleClear} />
+          book.format === 'epub-text' && book.chapters ? (
+            <EpubBookViewer
+              title={book.title}
+              chapters={book.chapters}
+              onLoadOther={(f) => openFiles(f)}
+              onClear={handleClear}
+            />
+          ) : (
+            <ComicViewer book={book} onLoadOther={(f) => openFiles(f)} onClear={handleClear} />
+          )
         ) : (
           <div className="flex-1 flex items-center justify-center px-6 lg:px-8 py-12">
             <div className="max-w-7xl w-full grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
@@ -113,7 +123,7 @@ export default function Home() {
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75"><path d="M12 16V4" /><path d="M8 8l4-4 4 4" /><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
                     </div>
                     <span className="block text-[14px] font-medium text-white">Haz clic para elegir páginas</span>
-                    <span className="block text-[12px] text-[#6B7280] mt-1">Máx 200MB · Todo queda en tu navegador</span>
+                    <span className="block text-[12px] text-[#6B7280] mt-1">Máx 900MB · Todo queda en tu navegador</span>
                     <input
                       type="file"
                       multiple

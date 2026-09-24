@@ -41,8 +41,9 @@ const SECTIONS: { title: string; items: { name: string; desc: string }[] }[] = [
   {
     title: 'Archivo y privacidad',
     items: [
-      { name: 'Cargar otro', desc: 'CBZ, ZIP, PDF, EPUB o imágenes sueltas. Máx 200MB.' },
+      { name: 'Cargar otro', desc: 'CBZ, ZIP, PDF, EPUB (cómic o novela) o imágenes sueltas. Máx 900MB.' },
       { name: 'Limpiar', desc: 'Cierra el cómic y borra el guardado local.' },
+      { name: 'EPUB de texto', desc: 'Las novelas abren en modo libro: capítulos, tamaño de letra y posición guardada.' },
       { name: 'Automático', desc: 'Todo se procesa en tu navegador y el cómic persiste al recargar (IndexedDB). Sin subidas.' },
     ],
   },

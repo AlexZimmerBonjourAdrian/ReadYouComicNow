@@ -7,7 +7,8 @@
         "dev": "next dev --turbopack",
         "build": "next build",
         "start": "next start",
-        "lint": "next lint"
+        "lint": "next lint",
+        "postinstall": "node scripts/sync-pdf-worker.mjs"
     },
     "dependencies": {
         "jszip": "^3.10.1",
