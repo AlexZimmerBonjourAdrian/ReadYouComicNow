@@ -4,7 +4,10 @@ export type ComicFit = 'page' | 'width' | 'zoom' | 'window';
 
 export interface EpubChapter {
   title: string;
+  /** HTML adaptado (modo Cómodo). */
   html: string;
+  /** HTML con formato editorial original (modo Fiel). */
+  originalHtml: string;
 }
 
 export interface ComicBook {

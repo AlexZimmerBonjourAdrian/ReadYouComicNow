@@ -9,7 +9,8 @@ export interface EpubTextResult {
 }
 
 const TEXT_THRESHOLD = 5000;
-const DROP_SELECTOR = 'script,style,link,meta,title,object,embed,audio,video,form,button,input,select,textarea,canvas,noscript,template';
+const DROP_COMFY = 'script,style,link,meta,title,object,embed,audio,video,form,button,input,select,textarea,canvas,noscript,template';
+const DROP_FAITHFUL = 'script,meta,title,object,embed,audio,video,form,button,input,select,textarea,canvas,noscript,template';
 
 export class EpubTextService {
   /** Libro de texto (novela) o null si el EPUB es de imágenes (cómic). */
@@ -57,6 +58,7 @@ export class EpubTextService {
     if (textLength < TEXT_THRESHOLD) return null;
 
     const urlCache = new Map<string, string>();
+    const textCache = new Map<string, string>();
     const images: string[] = [];
     const getUrl = async (zipPath: string): Promise<string | null> => {
       const hit = urlCache.get(zipPath);
@@ -69,6 +71,15 @@ export class EpubTextService {
       images.push(url);
       return url;
     };
+    const getText = async (zipPath: string): Promise<string | null> => {
+      const hit = textCache.get(zipPath);
+      if (hit !== undefined) return hit;
+      const f = zip.file(zipPath) ?? zip.file(decodeURIComponent(zipPath));
+      if (!f) return null;
+      const text = await f.async('string');
+      textCache.set(zipPath, text);
+      return text;
+    };
 
     const indexByPath = new Map(raws.map((r, i) => [r.path, i]));
     const chapters: EpubChapter[] = [];
@@ -77,7 +88,8 @@ export class EpubTextService {
       const dir = path.includes('/') ? path.slice(0, path.lastIndexOf('/') + 1) : '';
       chapters.push({
         title: this.chapterTitle(raw, i),
-        html: await this.cleanChapter(raw, dir, getUrl, indexByPath),
+        html: await this.cleanChapter(raw, dir, getUrl, getText, indexByPath, false),
+        originalHtml: await this.cleanChapter(raw, dir, getUrl, getText, indexByPath, true),
       });
     }
     this.applyToc(await this.readToc(zip, manifest, opfDir), indexByPath, chapters);
@@ -142,7 +154,9 @@ export class EpubTextService {
     raw: string,
     dir: string,
     getUrl: (zipPath: string) => Promise<string | null>,
+    getText: (zipPath: string) => Promise<string | null>,
     indexByPath: Map<string, number>,
+    faithful: boolean,
   ): Promise<string> {
     let doc: Document;
     try {
@@ -154,13 +168,36 @@ export class EpubTextService {
     const holder = document.createElement('div');
     holder.innerHTML = doc.body?.innerHTML ?? doc.documentElement.innerHTML;
 
-    holder.querySelectorAll(DROP_SELECTOR).forEach((el) => el.remove());
+    // Modo Fiel: se inyectan las hojas de estilo originales (con urls resueltas)
+    if (faithful) {
+      for (const link of Array.from(holder.getElementsByTagName('link'))) {
+        const rel = (link.getAttribute('rel') ?? '').toLowerCase();
+        const href = link.getAttribute('href') ?? '';
+        if (rel.includes('stylesheet') && href) {
+          const target = this.resolvePath(dir, href);
+          const css = target ? await getText(target) : null;
+          if (css) {
+            const cssDir = target!.includes('/') ? target!.slice(0, target!.lastIndexOf('/') + 1) : '';
+            const style = document.createElement('style');
+            style.textContent = await this.rewriteCssUrls(css, cssDir, getUrl);
+            link.replaceWith(style);
+            continue;
+          }
+        }
+        link.remove();
+      }
+      for (const style of Array.from(holder.getElementsByTagName('style'))) {
+        style.textContent = await this.rewriteCssUrls(style.textContent ?? '', dir, getUrl);
+      }
+    }
+
+    holder.querySelectorAll(faithful ? DROP_FAITHFUL : DROP_COMFY).forEach((el) => el.remove());
 
     for (const el of Array.from(holder.getElementsByTagName('*'))) {
       for (const attr of Array.from(el.attributes)) {
         if (/^on/i.test(attr.name)) el.removeAttribute(attr.name);
       }
-      el.removeAttribute('style');
+      if (!faithful) el.removeAttribute('style');
       const tag = el.tagName.toLowerCase();
       if (tag === 'a') {
         const href = el.getAttribute('href') ?? '';
@@ -273,6 +310,24 @@ export class EpubTextService {
     }
   }
 
+  /** Reescribe url(...) de un CSS con blob URLs del zip. */
+  private static async rewriteCssUrls(
+    css: string,
+    baseDir: string,
+    getUrl: (zipPath: string) => Promise<string | null>,
+  ): Promise<string> {
+    const matches = Array.from(css.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/gi));
+    let out = css;
+    for (const m of matches) {
+      const ref = m[2].trim();
+      if (!ref || /^(data:|https?:|mailto:|#)/i.test(ref)) continue;
+      const target = this.resolvePath(baseDir, ref);
+      const url = target ? await getUrl(target) : null;
+      if (url) out = out.split(m[0]).join(`url("${url}")`);
+    }
+    return out;
+  }
+
   private static mimeFor(name: string): string {
     const n = name.toLowerCase();
     if (n.endsWith('.png')) return 'image/png';
@@ -281,6 +336,11 @@ export class EpubTextService {
     if (n.endsWith('.avif')) return 'image/avif';
     if (n.endsWith('.bmp')) return 'image/bmp';
     if (n.endsWith('.svg')) return 'image/svg+xml';
+    if (n.endsWith('.css')) return 'text/css';
+    if (n.endsWith('.woff2')) return 'font/woff2';
+    if (n.endsWith('.woff')) return 'font/woff';
+    if (n.endsWith('.ttf')) return 'font/ttf';
+    if (n.endsWith('.otf')) return 'font/otf';
     return 'image/jpeg';
   }
 }
