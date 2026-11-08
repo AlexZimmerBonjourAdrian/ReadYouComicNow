@@ -1,5 +1,4 @@
-import JSZip from 'jszip';
-import { LoggerService } from './LoggerService';
+﻿import { LoggerService } from './LoggerService';
 import type { ComicBook } from '@/types/Comic';
 
 const IMAGE_EXT = /\.(jpe?g|png|webp|gif|avif|bmp)$/i;
@@ -41,6 +40,7 @@ export class ComicReaderService {
 
   private static async loadCbz(file: File): Promise<ComicBook> {
     const end = LoggerService.start('Comic', `CBZ ${file.name}`);
+    const { default: JSZip } = await import('jszip');
     const zip = await JSZip.loadAsync(await file.arrayBuffer());
     const names = Object.keys(zip.files).filter(
       (n) => IMAGE_EXT.test(n) && !n.includes('__MACOSX') && !n.endsWith('/'),
@@ -100,3 +100,4 @@ export class ComicReaderService {
     return 'image/jpeg';
   }
 }
+
